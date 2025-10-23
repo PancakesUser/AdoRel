@@ -58,7 +58,6 @@ async function uploadSlashCommands(): Promise<void> {
     
     try{
         await rest.put(Routes.applicationCommands(process.env.CLIENT_ID as string), {body: commands});
-        console.log(client.commands.map((cmd) => cmd.data.toJSON()));
         console.log("Commands've been uploaded to Discord's API ✅")
     }catch(error: unknown) {
         console.error("Something went wrong uploading command to Discord's API: ", error);

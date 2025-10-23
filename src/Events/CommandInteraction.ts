@@ -2,12 +2,7 @@ import type { CommandInteraction } from "discord.js";
 import { client } from "../index.ts";
 
 class CommandInteractionHandler {
-    constructor(interaction: CommandInteraction) {
-        this.handle(interaction);
-    }
-
-
-    private async handle(interaction: CommandInteraction): Promise<void> {
+    static async handle(interaction: CommandInteraction): Promise<void> {
         // Get the command from the Discord's Collection.
         const command = client.commands.get(interaction.commandName);
 

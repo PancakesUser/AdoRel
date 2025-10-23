@@ -50,7 +50,7 @@ class Ado extends Client {
         this.on("interactionCreate", async (interaction: Interaction<CacheType>) => {
             if(!interaction.guild) return;
             if(!interaction.isCommand()) return;
-            new CommandInteractionHandler(interaction);
+            CommandInteractionHandler.handle(interaction);
         });
 
         this.login(process.env.TOKEN);
