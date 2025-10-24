@@ -10,8 +10,34 @@ export default class LavalinkEventHandler {
 
         });
 
+
+        lavalinkManager.on("queueEnd", async (player: Player): Promise<void> => {
+            // Player Queue's empty. Start a timeout in order to leave the voice-channel.
+            setTimeout(async () => {
+                try{
+                    const guild = client.guilds.cache.get(player.guildId);
+                    if(!guild) return;
+                    // Destroy music player and leave the current voice-channel to save resources.
+                    await player.destroy();
+                    // Check if there's an available voice channel to send the disconnection-message.
+                    const channel = guild.channels.cache.get(player.textChannelId as string);
+                    if(!channel) return;
+
+                    if(channel && channel.isSendable()) {
+                        channel.sendTyping();
+                        channel.send("I've left the voice-channel due to the inactivity! :P!");
+                        return;
+                    }
+                }catch(error: unknown) {
+                    console.error("Something went wrong while trying to destroy a music player: ", error);
+                }
+            }, 3*1000*60);            
+        }) 
+
         lavalinkManager.on("playerQueueEmptyEnd", function(player: Player): void {
             // Player Queue's empty. Start a timeout in order to leave the voice-channel.
+            console.log("Queue's empty");
+
             setTimeout(() => {
                 try{
                     const guild = client.guilds.cache.get(player.guildId);
