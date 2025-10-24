@@ -7,13 +7,13 @@ import { REST, Routes, SlashCommandBuilder } from "discord.js";
 
 
 async function readCommands(): Promise<void> {
-    const commandFiles = fs.readdirSync(path.resolve(path.join(import.meta.dirname, "../commands")), {withFileTypes: true});
+    const commandFiles = fs.readdirSync(path.resolve(path.join(import.meta.dirname, "../Commands")), {withFileTypes: true});
 
     async function handleSubFolderCommands(folder: string): Promise<void> {
-        const folderContent = fs.readdirSync(path.resolve(path.join(import.meta.dirname, "../commands", folder))).filter((file) => file.endsWith(".ts"));
+        const folderContent = fs.readdirSync(path.resolve(path.join(import.meta.dirname, "../Commands", folder))).filter((file) => file.endsWith(".ts"));
 
         for (const file of folderContent) {
-            const convertedPathURL = pathToFileURL(path.resolve(import.meta.dirname, "../commands", folder, file)).href;
+            const convertedPathURL = pathToFileURL(path.resolve(import.meta.dirname, "../Commands", folder, file)).href;
 
             const command = await import(convertedPathURL);
             const commandInstance = new command.default()
@@ -25,7 +25,7 @@ async function readCommands(): Promise<void> {
 
 
     async function handleRootCommands(file: fs.Dirent): Promise<void> {
-        const commandPath = path.resolve(import.meta.dirname, "../commands", file.name);
+        const commandPath = path.resolve(import.meta.dirname, "../Commands", file.name);
         const convertedCommandPath = pathToFileURL(commandPath).href;
         const command = await import(convertedCommandPath);
         const commandInstance = new command.default();

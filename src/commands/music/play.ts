@@ -41,8 +41,8 @@ class Play extends Command {
 
 
         try{
+        
             await player.connect();
-            
 
             const {tracks} = await player.search(query, member.user, true);
 

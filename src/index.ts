@@ -4,12 +4,13 @@ import type { BotCommands } from "./Interfaces/BotCommands.ts";
 // Dot-Env
 import "dotenv/config";
 // ----
-import {Client, Collection, CommandInteraction, GatewayIntentBits, IntentsBitField, Partials, SlashCommandBuilder, type CacheType, type Interaction} from "discord.js";
-import CommandHandler from "./handlers/CommandHandler.ts";
+import {Client, Collection, GatewayIntentBits, IntentsBitField, Partials, type CacheType, type Interaction} from "discord.js";
+import CommandHandler from "./Handlers/CommandHandler.ts";
 import CommandInteractionHandler from "./Events/CommandInteraction.ts";
 // ----
 // Lavalink-Connection
 import { LavalinkManager, type ManagerOptions } from "lavalink-client";
+import LavalinkEventHandler from "./Events/LavalinkEvents.ts";
 
 // Lavalink-Configuration
 
@@ -79,7 +80,9 @@ class Ado extends Client {
             console.log("Conectado como: "+ client.user.tag);
             // Handle Modular Commands.
             new CommandHandler();
+            // Start Lavalink-Server
             this.lavalink.init({...client.user});
+            new LavalinkEventHandler(this.lavalink);
         });
 
 

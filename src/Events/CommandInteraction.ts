@@ -1,4 +1,4 @@
-import type { CacheType, ChatInputCommandInteraction, CommandInteraction, Interaction, InteractionResponse } from "discord.js";
+import type { CommandInteraction, InteractionResponse } from "discord.js";
 import { client } from "../index.ts";
 
 class CommandInteractionHandler {
