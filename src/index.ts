@@ -1,11 +1,41 @@
+// Interfaces
+import type { BotCommands } from "./Interfaces/BotCommands.ts";
+// ----
 // Dot-Env
 import "dotenv/config";
-// Dot-Env
+// ----
 import {Client, Collection, CommandInteraction, GatewayIntentBits, IntentsBitField, Partials, SlashCommandBuilder, type CacheType, type Interaction} from "discord.js";
 import CommandHandler from "./handlers/CommandHandler.ts";
 import CommandInteractionHandler from "./Events/CommandInteraction.ts";
+// ----
+// Lavalink-Connection
+import { LavalinkManager, type ManagerOptions } from "lavalink-client";
 
+// Lavalink-Configuration
 
+const LavalinkConfig: ManagerOptions = {
+    nodes: [
+        {
+            authorization: "1234",
+            host: "localhost",
+            port: 3055,
+            id: "AdoRel-Node"
+        }
+    ],
+    // Send Voice Server Updates to LavaLink-Client.
+    sendToShard: (guildId: string, payload) => {
+        const guild = client.guilds.cache.get(guildId);
+        if (guild) guild.shard.send(payload);
+    },
+
+    autoSkip: true,
+    client: {
+        id: process.env.CLIENT_ID as string,
+        username: "AdoRel"
+    }
+}
+
+// ---- Discord's Client Configuration
 const intents: GatewayIntentBits[] = [
     IntentsBitField.Flags.Guilds,
     IntentsBitField.Flags.GuildMessages,
@@ -13,16 +43,19 @@ const intents: GatewayIntentBits[] = [
     IntentsBitField.Flags.MessageContent
 ]
 
-
 const partials: Partials[] = [
     Partials.GuildMember,
     Partials.Message,
     Partials.Channel,
     Partials.User
 ]
+// ----
+
 
 class Ado extends Client {
-    public commands: Collection<string, {data: SlashCommandBuilder, execute: Function}> = new Collection();
+    public commands: Collection<string, BotCommands> = new Collection();
+    public lavalink: LavalinkManager = new LavalinkManager(LavalinkConfig);
+
 
     constructor() {
         super({
@@ -38,21 +71,28 @@ class Ado extends Client {
                 }]
             }
         });
-
+        
+        // Send raw data to Lavalink-Client.
+        this.on("raw", (d) => this.lavalink.sendRawData(d));
 
         this.on("clientReady", async (client: Client<true>) => {
             console.log("Conectado como: "+ client.user.tag);
             // Handle Modular Commands.
             new CommandHandler();
+            this.lavalink.init({...client.user});
         });
+
+
 
         // Handle Command-Interaction.
         this.on("interactionCreate", async (interaction: Interaction<CacheType>) => {
             if(!interaction.guild) return;
             if(!interaction.isCommand()) return;
+
             CommandInteractionHandler.handle(interaction);
         });
 
+        // Bot's Login.
         this.login(process.env.TOKEN);
     }
 }
