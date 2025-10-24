@@ -9,7 +9,7 @@ import CommandHandler from "./Handlers/CommandHandler.ts";
 import CommandInteractionHandler from "./Events/CommandInteraction.ts";
 // ----
 // Lavalink-Connection
-import { LavalinkManager, type ManagerOptions } from "lavalink-client";
+import { LavalinkManager, type ManagerOptions, type VoiceState } from "lavalink-client";
 import LavalinkEventHandler from "./Events/LavalinkEvents.ts";
 
 // Lavalink-Configuration
@@ -22,7 +22,8 @@ const LavalinkConfig: ManagerOptions = {
             port: 3055,
             id: "AdoRel-Node",
             // Resuming Session
-            heartBeatInterval: 30_000,
+            sessionId: "124",
+            heartBeatInterval: 15_000,
             enablePingOnStatsCheck: true,
             retryDelay: 10e3,
             secure: false,
@@ -98,6 +99,18 @@ class Ado extends Client {
             // Start Lavalink-Server
             this.lavalink.init({...client.user});
             new LavalinkEventHandler(this.lavalink);
+
+            setInterval(async () => {
+                for (const node of this.lavalink.nodeManager.nodes.values()) {
+                    try{
+                        console.log("Pinging nodes...", "Stats: "+ await node.fetchStats())
+                    }catch(error: unknown) {
+                        console.error("Failed to ping node: "+node.id+"\nTrying to reconnect..");
+                        node.connect();
+                    }
+                }
+            }, 30*1000);
+
         });
 
 

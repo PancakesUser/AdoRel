@@ -1,7 +1,11 @@
-import type { CacheType, ChatInputCommandInteraction, CommandInteraction, Guild, GuildMember, InteractionResponse, VoiceBasedChannel } from "discord.js";
-import Command from "../../Classes/Command.ts";
+import type { ChatInputCommandInteraction,  Guild, GuildMember, InteractionResponse, VoiceBasedChannel } from "discord.js";
 import { client } from "../../index.ts";
 import type { Track } from "lavalink-client";
+// Discord.JS Voice
+import { joinVoiceChannel } from "@discordjs/voice";
+// Classes
+import Command from "../../Classes/Command.ts";
+// ----
 
 class Play extends Command {
     constructor() {
@@ -44,8 +48,12 @@ class Play extends Command {
 
 
         try{
-        
-            await player.connect();
+
+            if(!player.connected) {
+                player.connect();
+            }else{
+                player.changeNode(player.node);
+            }
 
             const {tracks} = await player.search(query, member.user, true);
 
