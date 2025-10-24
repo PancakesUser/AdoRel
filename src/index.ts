@@ -20,9 +20,24 @@ const LavalinkConfig: ManagerOptions = {
             authorization: "1234",
             host: "localhost",
             port: 3055,
-            id: "AdoRel-Node"
+            id: "AdoRel-Node",
+            // Resuming Session
+            heartBeatInterval: 30_000,
+            enablePingOnStatsCheck: true,
+            retryDelay: 10e3,
+            secure: false,
+            retryAmount: 5,
+            closeOnError: false
         }
     ],
+    // Player Options
+    playerOptions: {
+        onDisconnect: {
+            autoReconnect: true,
+            destroyPlayer: false
+        },
+        defaultSearchPlatform: "spotify.com"
+    },
     // Send Voice Server Updates to LavaLink-Client.
     sendToShard: (guildId: string, payload) => {
         const guild = client.guilds.cache.get(guildId);

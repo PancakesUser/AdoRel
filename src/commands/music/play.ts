@@ -30,6 +30,9 @@ class Play extends Command {
         const member: GuildMember = interaction.member as GuildMember;
         // Voice-Channel
         const voice: VoiceBasedChannel = member.voice.channel as VoiceBasedChannel;
+
+
+        if(!voice) return interaction.reply({content: "Join a voice channel :P 🔊"});
         // Lavalink-Player
         const player = client.lavalink.getPlayer(guild.id) || client.lavalink.createPlayer({
             guildId: guild.id,
