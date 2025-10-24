@@ -1,6 +1,6 @@
-import type { ChatInputCommandInteraction,  Guild, GuildMember, InteractionResponse, VoiceBasedChannel } from "discord.js";
+import { ActionRow, ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, Collector, Embed, EmbedBuilder, InteractionCollector, Message, MessageCollector, type ChatInputCommandInteraction,  type Guild, type GuildMember, type Interaction, type InteractionResponse, type VoiceBasedChannel } from "discord.js";
 import { client } from "../../index.ts";
-import type { Track } from "lavalink-client";
+import type { Track, UnresolvedTrack } from "lavalink-client";
 // Discord.JS Voice
 import { joinVoiceChannel } from "@discordjs/voice";
 // Classes
@@ -52,13 +52,83 @@ class Play extends Command {
             if(!player.connected) {
                 player.connect();
             }else{
-                player.changeNode(player.node);
+                console.log("Is player-node Alive: ", player.node.isAlive);
             }
 
             const {tracks} = await player.search(query, member.user, true);
-
-
+            
             if(tracks.length === 0) return interaction.reply({content: "No results have been found for your request! :C"});
+
+
+            const listedTracks: Track[] = tracks as Track[];
+            const slicedTracks: Track[] = listedTracks.slice(0, 5);
+
+            // TrackSelectMenu-Embed ---
+            const TrackSelectMenu: EmbedBuilder = new EmbedBuilder();
+            TrackSelectMenu.setTitle("-- TRACK SELECTION --")
+            TrackSelectMenu.setDescription(`${slicedTracks.map((track: Track, i: number) => {
+                return `\`\`\`yaml\n${i + 1} ${track.info.title}\nAuthor: ${track.info.author}\n
+                \`\`\``
+            }).join(" ").trim()}`);
+            TrackSelectMenu.setColor("Green")
+            TrackSelectMenu.setFooter({text: "Requested by: "+member.user.displayName})
+            // ----
+
+            // TrackSelectMenu-Action-Row ---
+            const NumbersActionRow = new ActionRowBuilder<ButtonBuilder>();
+            const PagesActionRow = new ActionRowBuilder<ButtonBuilder>();
+
+            const one_number_button: ButtonBuilder = new ButtonBuilder()
+            .setId(1)
+            .setCustomId("one")
+            .setLabel("1")
+            .setStyle(ButtonStyle.Primary)
+
+            const two_number_button: ButtonBuilder = new ButtonBuilder()
+            .setId(2)
+            .setCustomId("two")
+            .setLabel("2")
+            .setStyle(ButtonStyle.Primary)
+
+            const three_number_button: ButtonBuilder = new ButtonBuilder()
+            .setId(3)
+            .setCustomId("three")
+            .setLabel("3")
+            .setStyle(ButtonStyle.Primary)
+
+            const four_number_button: ButtonBuilder = new ButtonBuilder()
+            .setId(4)
+            .setCustomId("four")
+            .setLabel("4")
+            .setStyle(ButtonStyle.Primary)
+
+            const five_number_button: ButtonBuilder = new ButtonBuilder()
+            .setId(5)
+            .setCustomId("five")
+            .setLabel("5")
+            .setStyle(ButtonStyle.Primary)
+            
+            const next_page: ButtonBuilder = new ButtonBuilder()
+            .setCustomId("next_page")
+            .setLabel("➡️")
+            .setStyle(ButtonStyle.Secondary)
+            
+            NumbersActionRow.addComponents([one_number_button, two_number_button, three_number_button, four_number_button, five_number_button]);
+            PagesActionRow.addComponents([next_page]);
+
+            // ----
+
+            const message = await interaction.reply({embeds: [TrackSelectMenu], components: [NumbersActionRow, PagesActionRow]})
+            
+
+            const collector = message.createMessageComponentCollector({time: 1*60*60*1000});
+            
+            collector.on("collect", async (collected) => {
+                await collected.deferUpdate();
+                message.edit({content: "hi :3"})
+            });
+
+ 
 
             await player.play({
                 track: tracks[0] as Track,
@@ -68,8 +138,6 @@ class Play extends Command {
         }catch(error: unknown) {
             console.error("Something went wrong trying to reproduce a song: ", error);
         }
-   
-
     }
 }
 
