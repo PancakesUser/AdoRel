@@ -98,14 +98,17 @@ class Play extends Command {
                 .setLabel(`${i+1}`)
                 .setStyle(ButtonStyle.Primary)
 
-                console.log(x_button.data);
                 ButtonsForQueue.push(x_button);
             }
 
             // Handle Page-Management
-            const pages: number = Math.ceil(listedTracks.length / 5);
-            const start: number = pages * 5;
-            const pageItems = listedTracks.slice(start, start * pages);
+            // const pages: number = Math.ceil(listedTracks.length / 5);
+            let start: number = 0;
+            let end: number = 5;
+
+            console.log(start, end);
+
+            let pageItems = listedTracks.slice(start, end);
 
 
             // 
@@ -137,6 +140,18 @@ class Play extends Command {
                 if(collected.user.id !== member.user.id) return;
 
                 if(collected.customId === "next_page") {
+                    
+                    start = Math.min(start + 5, 10);
+                    end = Math.min(start + 5, 10);
+                    console.log(start);
+
+                    pageItems = listedTracks.slice(start, end);
+
+                    // The end of the page has been reached.
+                    if(pageItems.length === 0) {
+                        return;
+                    }
+
                     const TrackSelectMenuNextPage: EmbedBuilder = EmbedBuilder.from(TrackSelectMenu.toJSON())
                     .setDescription(`Select the number of the song that you'd like to listen\nIf nothing is selected in **60s** a random song will be selected.\n${pageItems.map((track: Track, i: number) => {
                         return `${i+start+1}\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
@@ -148,7 +163,9 @@ class Play extends Command {
                 }
 
                const selectedTrack: Track | undefined = listedTracks[(Number(collected.customId))];
-               console.log(Number(collected.customId));
+               
+                console.log("Track selected by button: ", selectedTrack?.info.title+"Button Touched: "+collected.customId)
+
                if(!selectedTrack) return;
 
                await player.play({
