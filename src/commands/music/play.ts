@@ -1,4 +1,4 @@
-import { ActionRow, ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, Collector, Embed, EmbedBuilder, InteractionCollector, Message, MessageCollector, type ChatInputCommandInteraction,  type Guild, type GuildMember, type Interaction, type InteractionResponse, type VoiceBasedChannel } from "discord.js";
+import { ActionRow, ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, Collector, Embed, EmbedBuilder, InteractionCollector, Message, MessageCollector, type ChatInputCommandInteraction,  type Guild, type GuildMember, type Interaction, type InteractionResponse, type JSONEncodable, type VoiceBasedChannel } from "discord.js";
 import { client } from "../../index.ts";
 import type { Track, UnresolvedTrack } from "lavalink-client";
 // Discord.JS Voice
@@ -61,13 +61,22 @@ class Play extends Command {
 
 
             const listedTracks: Track[] = tracks as Track[];
-            const slicedTracks: Track[] = listedTracks.slice(0, 5);
+            let slicedTracks: Track[] = listedTracks.slice(0, 5);
 
             // TrackSelectMenu-Embed ---
             const TrackSelectMenu: EmbedBuilder = new EmbedBuilder();
+
+            // TrackSelectMenu-Artist-Portrait
+            if(slicedTracks && slicedTracks.length >= 0) {
+                const artistArtWork = slicedTracks[0]?.pluginInfo.artistArtworkUrl;
+                if(artistArtWork != null || artistArtWork != undefined) {
+                    TrackSelectMenu.setThumbnail(artistArtWork);
+                }
+            }
+        
             TrackSelectMenu.setTitle("-- TRACK SELECTION --")
-            TrackSelectMenu.setDescription(`${slicedTracks.map((track: Track, i: number) => {
-                return `\`\`\`yaml\n${i + 1} ${track.info.title}\nAuthor: ${track.info.author}\n
+            TrackSelectMenu.setDescription(`Select the number of the song that you'd like to listen\nIf nothing is selected in **60s** a random song will be selected.\n${slicedTracks.map((track: Track, i: number) => {
+                return `${i+1}\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
                 \`\`\``
             }).join(" ").trim()}`);
             TrackSelectMenu.setColor("Green")
@@ -76,63 +85,75 @@ class Play extends Command {
 
             // TrackSelectMenu-Action-Row ---
             const NumbersActionRow = new ActionRowBuilder<ButtonBuilder>();
+            const NumbersActionRow_2 = new ActionRowBuilder<ButtonBuilder>();
             const PagesActionRow = new ActionRowBuilder<ButtonBuilder>();
 
-            const one_number_button: ButtonBuilder = new ButtonBuilder()
-            .setId(1)
-            .setCustomId("one")
-            .setLabel("1")
-            .setStyle(ButtonStyle.Primary)
 
-            const two_number_button: ButtonBuilder = new ButtonBuilder()
-            .setId(2)
-            .setCustomId("two")
-            .setLabel("2")
-            .setStyle(ButtonStyle.Primary)
+            // Generate a button for every entry from ListedTracks from the LavaLink-Search.
+            const ButtonsForQueue: ButtonBuilder[] = [];
 
-            const three_number_button: ButtonBuilder = new ButtonBuilder()
-            .setId(3)
-            .setCustomId("three")
-            .setLabel("3")
-            .setStyle(ButtonStyle.Primary)
+            for (var i = 0; i < listedTracks.length; i++) {
+                const x_button: ButtonBuilder = new ButtonBuilder()
+                .setCustomId(`${i}`)
+                .setLabel(`${i+1}`)
+                .setStyle(ButtonStyle.Primary)
 
-            const four_number_button: ButtonBuilder = new ButtonBuilder()
-            .setId(4)
-            .setCustomId("four")
-            .setLabel("4")
-            .setStyle(ButtonStyle.Primary)
+                console.log(x_button.data);
+                ButtonsForQueue.push(x_button);
+            }
 
-            const five_number_button: ButtonBuilder = new ButtonBuilder()
-            .setId(5)
-            .setCustomId("five")
-            .setLabel("5")
-            .setStyle(ButtonStyle.Primary)
-            
+            // Handle Page-Management
+            const pages: number = Math.ceil(listedTracks.length / 5);
+            const start: number = pages * 5;
+            const pageItems = listedTracks.slice(start, start * pages);
+
+
+            // 
             const next_page: ButtonBuilder = new ButtonBuilder()
             .setCustomId("next_page")
             .setLabel("➡️")
             .setStyle(ButtonStyle.Secondary)
-            
-            NumbersActionRow.addComponents([one_number_button, two_number_button, three_number_button, four_number_button, five_number_button]);
-            PagesActionRow.addComponents([next_page]);
 
+            const previous_page: ButtonBuilder = new ButtonBuilder()
+            .setCustomId("previous_page")
+            .setLabel("⬅️")
+            .setStyle(ButtonStyle.Primary)
+            
+            NumbersActionRow.addComponents(ButtonsForQueue.slice(0, 5));
+            NumbersActionRow_2.addComponents(ButtonsForQueue.slice(5,10));
+            PagesActionRow.addComponents([previous_page, next_page]);
+    
             // ----
 
             const message = await interaction.reply({embeds: [TrackSelectMenu], components: [NumbersActionRow, PagesActionRow]})
             
 
             const collector = message.createMessageComponentCollector({time: 1*60*60*1000});
-            
-            collector.on("collect", async (collected) => {
+
+            collector.on("collect", async (collected): Promise<void> => {
+                // Defer the Embed Edit.
                 await collected.deferUpdate();
-                message.edit({content: "hi :3"})
-            });
+                // Verify if the user that has era
+                if(collected.user.id !== member.user.id) return;
 
- 
+                if(collected.customId === "next_page") {
+                    const TrackSelectMenuNextPage: EmbedBuilder = EmbedBuilder.from(TrackSelectMenu.toJSON())
+                    .setDescription(`Select the number of the song that you'd like to listen\nIf nothing is selected in **60s** a random song will be selected.\n${pageItems.map((track: Track, i: number) => {
+                        return `${i+start+1}\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
+                        \`\`\``
+                    }).join(" ").trim()}`);
 
-            await player.play({
-                track: tracks[0] as Track,
-                volume: 100
+                    collected.editReply({embeds: [TrackSelectMenuNextPage], components: [NumbersActionRow_2, PagesActionRow]});
+                    return;
+                }
+
+               const selectedTrack: Track | undefined = listedTracks[(Number(collected.customId))];
+               console.log(Number(collected.customId));
+               if(!selectedTrack) return;
+
+               await player.play({
+                track: selectedTrack
+               });
             });
 
         }catch(error: unknown) {
