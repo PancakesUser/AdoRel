@@ -153,7 +153,7 @@ class Play extends Command {
                     }
 
                     const TrackSelectMenuNextPage: EmbedBuilder = EmbedBuilder.from(TrackSelectMenu.toJSON())
-                    .setDescription(`Select the number of the song that you'd like to listen\nIf nothing is selected in **60s** a random song will be selected.\n${pageItems.map((track: Track, i: number) => {
+                    .setDescription(`Select the number of the song that you'd like to listen\n\nIf nothing is selected in **60s** a random song will be selected.\n${pageItems.map((track: Track, i: number) => {
                         return `${i+start+1}\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
                         \`\`\``
                     }).join(" ").trim()}`);
@@ -168,7 +168,7 @@ class Play extends Command {
                     pageItems = listedTracks.slice(start, end);
                     
                     const TrackSelectMenuNextPage: EmbedBuilder = EmbedBuilder.from(TrackSelectMenu.toJSON())
-                    .setDescription(`Select the number of the song that you'd like to listen\nIf nothing is selected in **60s** a random song will be selected.\n${pageItems.map((track: Track, i: number) => {
+                    .setDescription(`Select the number of the song that you'd like to listen\n\nIf nothing is selected in **60s** a random song will be selected.\n${pageItems.map((track: Track, i: number) => {
                         return `${i+start+1}\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
                         \`\`\``
                     }).join(" ").trim()}`);
@@ -179,7 +179,7 @@ class Play extends Command {
 
                const selectedTrack: Track | undefined = listedTracks[(Number(collected.customId))];
                
-                console.log("Track selected by button: ", selectedTrack?.info.title+"Button Touched: "+collected.customId)
+                console.log("Track selected by button: ", selectedTrack?.info.title+" Button Touched: "+collected.customId)
 
                if(!selectedTrack) return;
 
