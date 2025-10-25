@@ -9,6 +9,7 @@
   "private": true,
   "devDependencies": {
     "@types/node": "^24.9.1",
+    "pretty-ms": "^9.3.0",
     "ts-node": "^10.9.2",
     "typescript": "5.9.3"
   },

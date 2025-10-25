@@ -1,4 +1,4 @@
-import { type LavalinkManager, type Track, type WebSocketClosedEvent, LavalinkNode, Player } from "lavalink-client";
+import { type InvalidLavalinkRestRequest, type LavalinkManager, type LavalinkPlayer, type Track, type WebSocketClosedEvent, LavalinkNode, Player } from "lavalink-client";
 import { client } from "../index.ts";
 
 export default class LavalinkEventHandler {
@@ -6,6 +6,14 @@ export default class LavalinkEventHandler {
         // Handle Player Events as Resume, Pause, Skip ...
         
         // Handle Track-Reproduction.
+
+        lavalinkManager.nodeManager.on("connect", (node: LavalinkNode) => node.updateSession(true, 360e3));
+
+        lavalinkManager.nodeManager.on("resumed", async (node: LavalinkNode, payload, fetchedPlayers: LavalinkPlayer[] | InvalidLavalinkRestRequest): Promise<void> => {
+
+        });
+
+
         lavalinkManager.on("trackStart", async (player: Player, track: Track | null): Promise<void> => {
 
         });
@@ -13,8 +21,7 @@ export default class LavalinkEventHandler {
 
         lavalinkManager.on("playerSocketClosed", (player: Player, payload: WebSocketClosedEvent) => {
             console.log("A player has been disconnected, try to reconnect to the voice channel.");
-            player.connect();
-            player.node.connect();
+            player.node.connect(player.node.sessionId as string);
             console.log(payload.code, payload.guildId, payload.reason)
         });
 
@@ -26,13 +33,6 @@ export default class LavalinkEventHandler {
         lavalinkManager.nodeManager.on("disconnect", async (node, reason) => {
             console.log("Client has been disconnected: "+"code: "+reason.code+"reason: "+reason.reason);
             console.log("Sesión ID:", node.sessionId);
-            if(reason.code === 1006) {
-                try{
-                    console.log(node.connectionStatus);
-                }catch(error: unknown) {
-                    console.error("Unable to re-connect the node due to 1006 code: ", error);
-                }
-            }
         });
 
         //Handle Queue-End.
@@ -40,6 +40,9 @@ export default class LavalinkEventHandler {
             // Player Queue's empty. Start a timeout in order to leave the voice-channel.
             setTimeout(async () => {
                 try{
+
+                    if(player.playing) return;
+
                     const guild = client.guilds.cache.get(player.guildId);
                     if(!guild) return;
                     // Destroy music player and leave the current voice-channel to save resources.

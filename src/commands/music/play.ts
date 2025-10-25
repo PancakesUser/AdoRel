@@ -1,10 +1,38 @@
-import { ActionRow, ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, Collector, Embed, EmbedBuilder, InteractionCollector, Message, MessageCollector, type ChatInputCommandInteraction,  type Guild, type GuildMember, type Interaction, type InteractionResponse, type JSONEncodable, type VoiceBasedChannel } from "discord.js";
+import {  ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, type ChatInputCommandInteraction,  type Guild, type GuildMember, type Interaction, type InteractionResponse, type JSONEncodable, type VoiceBasedChannel } from "discord.js";
 import { client } from "../../index.ts";
+import prettyMS from "pretty-ms";
+// Lavalink
 import type { Track, UnresolvedTrack } from "lavalink-client";
-// Discord.JS Voice
-import { joinVoiceChannel } from "@discordjs/voice";
+// ----
 // Classes
 import Command from "../../Classes/Command.ts";
+// ----
+
+
+
+// Embed - Functions
+function returnSelectedTrack(track: Track | UnresolvedTrack, member: GuildMember): EmbedBuilder {
+    const SelectedTrack: EmbedBuilder = new EmbedBuilder();
+
+    // Get Basic Track-Information such as title, author, artworkUrl...
+    const {title, author, artworkUrl, duration} = track.info;
+    const {artistArtworkUrl} = track.pluginInfo;
+    
+    if(artistArtworkUrl) {
+        SelectedTrack.setThumbnail(artistArtworkUrl);
+    }
+
+    if(artworkUrl) {
+        SelectedTrack.setImage(artworkUrl);
+    }
+
+    SelectedTrack.setTitle("Added to queue");
+    SelectedTrack.setDescription(`**${title}** \`\`\`yaml\nAuthor: ${author}\`\`\`\`\`\`yaml\nDuration: ${duration ? `${prettyMS(duration, {keepDecimalsOnWholeSeconds: false, secondsDecimalDigits: 0})}\`\`\`` : ""}\nRequester: <@${member.user.id}>`);
+    SelectedTrack.setFooter({text: "Enjoy! :P"})
+    SelectedTrack.setColor("Green")
+
+    return SelectedTrack;
+}
 // ----
 
 class Play extends Command {
@@ -131,7 +159,7 @@ class Play extends Command {
             const message = await interaction.reply({embeds: [TrackSelectMenu], components: [NumbersActionRow, PagesActionRow]})
             
 
-            const collector = message.createMessageComponentCollector({time: 1*60*60*1000});
+            const collector = message.createMessageComponentCollector({time: 2*60*1000});
 
             collector.on("collect", async (collected): Promise<void> => {
                 // Defer the Embed Edit.
@@ -154,7 +182,7 @@ class Play extends Command {
 
                     const TrackSelectMenuNextPage: EmbedBuilder = EmbedBuilder.from(TrackSelectMenu.toJSON())
                     .setDescription(`Select the number of the song that you'd like to listen\n\nIf nothing is selected in **60s** a random song will be selected.\n${pageItems.map((track: Track, i: number) => {
-                        return `${i+start+1}\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
+                        return `${i+start+1}.\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
                         \`\`\``
                     }).join(" ").trim()}`);
 
@@ -169,7 +197,7 @@ class Play extends Command {
                     
                     const TrackSelectMenuNextPage: EmbedBuilder = EmbedBuilder.from(TrackSelectMenu.toJSON())
                     .setDescription(`Select the number of the song that you'd like to listen\n\nIf nothing is selected in **60s** a random song will be selected.\n${pageItems.map((track: Track, i: number) => {
-                        return `${i+start+1}\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
+                        return `${i+start+1}.\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
                         \`\`\``
                     }).join(" ").trim()}`);
 
@@ -177,17 +205,22 @@ class Play extends Command {
                     return;
                 }
 
-               const selectedTrack: Track | undefined = listedTracks[(Number(collected.customId))];
+               const selectedTrack: Track | undefined = listedTracks[(parseInt(collected.customId))];
                
                 console.log("Track selected by button: ", selectedTrack?.info.title+" Button Touched: "+collected.customId)
 
                if(!selectedTrack) return;
+                // Edit the Track-Select-Menu Embed with the Selected-Track-Embed.
+               collected.editReply({embeds: [returnSelectedTrack(selectedTrack, member)], components: []})
 
                await player.play({
                 track: selectedTrack
                });
             });
 
+            collector.on("end", (collected): void => {
+                console.log("Track-Select-Menu Collection has ended.");
+            });
         }catch(error: unknown) {
             console.error("Something went wrong trying to reproduce a song: ", error);
         }

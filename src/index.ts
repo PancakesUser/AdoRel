@@ -23,8 +23,8 @@ const LavalinkConfig: ManagerOptions = {
             id: "AdoRel-Node",
             // Resuming Session
             sessionId: "124",
-            heartBeatInterval: 15_000,
-            enablePingOnStatsCheck: true,
+            heartBeatInterval: 5000,
+            requestSignalTimeoutMS: 5000,
             retryDelay: 10e3,
             secure: false,
             retryAmount: 5,
@@ -49,6 +49,13 @@ const LavalinkConfig: ManagerOptions = {
     client: {
         id: process.env.CLIENT_ID as string,
         username: "AdoRel"
+    },
+    advancedOptions: {
+        debugOptions: {
+            noAudio: true,
+            playerDestroy: {debugLog: true}
+        },
+        enableDebugEvents: true
     }
 }
 
@@ -99,18 +106,6 @@ class Ado extends Client {
             // Start Lavalink-Server
             this.lavalink.init({...client.user});
             new LavalinkEventHandler(this.lavalink);
-
-            setInterval(async () => {
-                for (const node of this.lavalink.nodeManager.nodes.values()) {
-                    try{
-                        console.log("Pinging nodes...", "Stats: "+ await node.fetchStats())
-                    }catch(error: unknown) {
-                        console.error("Failed to ping node: "+node.id+"\nTrying to reconnect..");
-                        node.connect();
-                    }
-                }
-            }, 30*1000);
-
         });
 
 
