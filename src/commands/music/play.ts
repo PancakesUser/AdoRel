@@ -120,7 +120,7 @@ class Play extends Command {
             const previous_page: ButtonBuilder = new ButtonBuilder()
             .setCustomId("previous_page")
             .setLabel("⬅️")
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Secondary)
             
             NumbersActionRow.addComponents(ButtonsForQueue.slice(0, 5));
             NumbersActionRow_2.addComponents(ButtonsForQueue.slice(5,10));
@@ -152,6 +152,21 @@ class Play extends Command {
                         return;
                     }
 
+                    const TrackSelectMenuNextPage: EmbedBuilder = EmbedBuilder.from(TrackSelectMenu.toJSON())
+                    .setDescription(`Select the number of the song that you'd like to listen\nIf nothing is selected in **60s** a random song will be selected.\n${pageItems.map((track: Track, i: number) => {
+                        return `${i+start+1}\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
+                        \`\`\``
+                    }).join(" ").trim()}`);
+
+                    collected.editReply({embeds: [TrackSelectMenuNextPage], components: [NumbersActionRow_2, PagesActionRow]});
+                    return;
+                }else if(collected.customId === "previous_page") {
+                    start = Math.max(start - 5, 0);
+                    end = start + 5;
+                    console.log("start", start, "end", end);
+
+                    pageItems = listedTracks.slice(start, end);
+                    
                     const TrackSelectMenuNextPage: EmbedBuilder = EmbedBuilder.from(TrackSelectMenu.toJSON())
                     .setDescription(`Select the number of the song that you'd like to listen\nIf nothing is selected in **60s** a random song will be selected.\n${pageItems.map((track: Track, i: number) => {
                         return `${i+start+1}\`\`\`yaml\nTitle: ${track.info.title}\nAuthor: ${track.info.author}\n
